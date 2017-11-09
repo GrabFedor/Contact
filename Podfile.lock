@@ -1,0 +1,18 @@
+PODS:
+  - Alamofire (4.3.0)
+  - SwiftWebSocket (2.6.5)
+  - SwiftyJSON (3.1.4)
+
+DEPENDENCIES:
+  - Alamofire
+  - SwiftWebSocket
+  - SwiftyJSON
+
+SPEC CHECKSUMS:
+  Alamofire: 856a113053a7bc9cbe5d6367a555d773fc5cfef7
+  SwiftWebSocket: 1ef8a0efb023544643bdf480c1ec4a62b204f293
+  SwiftyJSON: c2842d878f95482ffceec5709abc3d05680c0220
+
+PODFILE CHECKSUM: abb504c44964cbbb63a4db2819e60d90b3a13bd9
+
+COCOAPODS: 1.2.0
