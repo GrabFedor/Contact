@@ -26,7 +26,7 @@ protocol ServerDelegateGameMaker{
 
 class Server {
   
-  static private let ws = WebSocket("ws://127.0.0.1:5678")
+  static private let ws = WebSocket("ws://80.93.182.190:5678")
   
   static var commonFuncs: ServerDelegate!
   var player: ServerDelegatePlayer!
