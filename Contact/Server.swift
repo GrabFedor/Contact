@@ -26,22 +26,30 @@ protocol ServerDelegateGameMaker{
 
 class Server {
   
-  static private let ws = WebSocket("ws://80.93.182.190:5678")
+  static private let ws = WebSocket("ws://127.0.0.1:5678")
   
   static var commonFuncs: ServerDelegate!
   var player: ServerDelegatePlayer!
   var gameMAker: ServerDelegateGameMaker!
+  static private var connectionIsOpened = false
+  static private var roomId = ""
   
   class func sendMessage(message: Message){
     let definition = message.definition
     let word = message.word
     ws.send("100\(definition)/\(word)")
   }
+  
   class func openConnection(firstMsg message: String) {
     ws.event.open = {
-      self.ws.send(message)
-      print("opened")
-      
+      if !connectionIsOpened {
+        self.ws.send("000\(message)")
+        connectionIsOpened = true
+        print("opened")
+      } else {
+        self.ws.send("001\(message)/\(self.roomId)")
+        print("reopened")
+      }
     }
     ws.event.close = { code, reason, clean in
       print("closed")
@@ -55,28 +63,36 @@ class Server {
     ws.event.message = { message in
       print("recv: \(message)")
       var code = ""
-      var frame = ""
+      var decodedFrame = ""
       let characters = (message as! String).characters
       var i = 0
       for char in characters {
         if i <= 3 {
           code += "\(char)"
         } else {
-          frame += "\(char)"
+          decodedFrame += "\(char)"
         }
         
         i += 1
       }
-      switch code{
+      
+      switch code {
         
-      case "1001":
-        var arr = frame.components(separatedBy: "/")
+      case "1009":
+        var arr = decodedFrame.components(separatedBy: "/")
         let definition = arr[0]
         let word = arr[1]
         Server.commonFuncs.newMessage(definition: definition, word: word)
         
-      case "2001":
-        Server.commonFuncs.word(word: frame)
+      case "2009":
+        Server.commonFuncs.word(word: decodedFrame)
+        
+      case "0009":
+        var arr = decodedFrame.components(separatedBy: "/")
+        let roomId = arr[1]
+        print(arr[0])
+        self.roomId = roomId
+        print(self.roomId)
         
       default:
         break

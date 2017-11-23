@@ -53,7 +53,7 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
   override func viewDidLoad() {
     super.viewDidLoad()
     Server.commonFuncs = self
-    Server.openConnection(firstMsg: "000Fedya")
+    Server.openConnection(firstMsg: "Fedya")
     setUpTableView()
     setUpDefinitionTextField()
     setUpWordTextField()
