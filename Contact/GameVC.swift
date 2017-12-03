@@ -10,12 +10,23 @@ import Foundation
 import UIKit
 
 protocol GameViewControllerDelegate {
+  
   func gameLoop(tableViewToUpdate tableView: UITableView, wordLabelToUpdate wordLabel: UILabel)
+  
 }
 
-class GameViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, ServerDelegate {
+enum PlayerType {
+  case player
   
-  var messages = [Message]()
+  case gameMaker
+}
+
+class GameViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, ServerDelegate, ContactCellDelegate {
+  
+  private var messages = [Message]()
+  private var name = ""
+  
+  var playerType: PlayerType = .player
   
   let tableView : UITableView = {
     let t = UITableView()
@@ -28,6 +39,7 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
     dtf.translatesAutoresizingMaskIntoConstraints = false
     return dtf
   }()
+  
   let wordTextField: UITextField = {
     let wtf = UITextField()
     wtf.translatesAutoresizingMaskIntoConstraints = false
@@ -38,38 +50,44 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
     let btn: UIButton = UIButton(frame: CGRect(x: 100, y: 400, width: 100, height: 50))
     btn.backgroundColor = UIColor.green
     btn.setTitle("Click Me", for: .normal)
-    btn.addTarget(self, action: #selector(buttonAction), for: .touchUpInside)
+    btn.addTarget(self, action: #selector(sendButtonAction), for: .touchUpInside)
     btn.tag = 1
     return btn
   }()
   
-  func buttonAction(sender: UIButton!) {
+  func sendButtonAction(sender: UIButton!) {
     let btnsendtag: UIButton = sender
     if btnsendtag.tag == 1 {
-      let message = Message(definition: definitionTextField.text!, word: wordTextField.text!, user: "Fedya")
+      let message = Message(definition: definitionTextField.text!, word: wordTextField.text!, user: self.name)
       Server.sendMessage(message: message)
     }
   }
+  
   override func viewDidLoad() {
     super.viewDidLoad()
-    Server.commonFuncs = self
-    Server.openConnection(firstMsg: "Fedya")
-    setUpTableView()
-    setUpDefinitionTextField()
-    setUpWordTextField()
-    setUpButton()
-  }
-  override func viewWillAppear(_ animated: Bool) {
-//    NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: .UIKeyboardWillShow, object: nil)
+    Server.delegate = self
   }
   
-//  func keyboardWillShow(notification: NSNotification) {
-//    if let keyboardSize = (notification.userInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue)?.cgRectValue {
-//      let keyboardHeight = keyboardSize.height
-//      print(keyboardHeight)
-//    }
-//  }
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    startGame()
+  }
   
+  func startGame() {
+    let alertController = UIAlertController(title: "Name", message: nil, preferredStyle: .alert)
+    alertController.addTextField { textField in
+      textField.placeholder = "Type your nickname here..."
+    }
+    let alertAction = UIAlertAction(title: "Ok", style: .default) { aa in
+      self.name = (alertController.textFields?[0].text)!
+      Server.openConnection(firstMsg: self.name)
+    }
+    alertController.addAction(alertAction)
+    present(alertController, animated: true, completion: nil)
+  }
+  
+
+  //MARK:- Setting up Views
   func setUpButton() {
     self.view.addSubview(sendButton)
     
@@ -90,14 +108,16 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
     self.view.addSubview(wordTextField)
     wordTextField.backgroundColor = UIColor.lightGray
     wordTextField.placeholder = "type a word here"
+    
     wordTextField.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 10.0).isActive = true
     wordTextField.topAnchor.constraint(equalTo: definitionTextField.bottomAnchor, constant: 10.0).isActive = true
     wordTextField.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -10.0).isActive = true
     definitionTextField.heightAnchor.constraint(equalToConstant: 20).isActive = true
-
+    
   }
   
   func setUpTableView() {
+    
     self.view.addSubview(tableView)
     
     // constrain the table view to 120-pts on the top,
@@ -112,13 +132,46 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
     tableView.dataSource = self
     
     // register a defalut cell
-    tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
+    tableView.register(ContactCell.self, forCellReuseIdentifier: "cell")
   }
   
-  // MARK: - Derver Delegate
+  //MARK: - Contact Cell Delegate
+  func contactCellButtonSetup(firstWord: String) {
+    switch playerType {
+    case .gameMaker:
+      gameMakerContactCellButtonTarger(firstWord: firstWord)
+    case .player:
+      playerContactCellButtonTarget(firstWord: firstWord)
+    }
+  }
   
+  func buttonAlert(title: String, placeholder: String, handler: @escaping(_:String) -> Void) {
+    let ac = UIAlertController(title: "", message: nil, preferredStyle: .alert)
+    ac.addTextField { tt in
+      tt.placeholder = placeholder
+    }
+    let aa = UIAlertAction(title: "Ok", style: .default) { aa in
+      handler((ac.textFields?[0].text!)!)
+    }
+    ac.addAction(aa)
+    present(ac, animated: true, completion: nil)
+  }
+  
+  func gameMakerContactCellButtonTarger(firstWord: String) {
+    buttonAlert(title: "Cancel Contact", placeholder: "type a word here") { word in
+      Server.cancelContact(actualWord: firstWord, estimatedWord: word)
+    }
+  }
+  
+  func playerContactCellButtonTarget(firstWord: String) {
+    buttonAlert(title: "Contact!", placeholder: "type a word here") { word in
+      Server.tryToContact(firstWord: firstWord, secondWord: word)
+    }
+  }
+  
+  // MARK: - Server Delegate
   func newMessage(definition: String, word: String) {
-    let message = Message(definition: definition, word: word, user: "Smone")
+    let message = Message(definition: definition, word: word, user: self.name)
     self.messages.append(message)
     tableView.reloadData()
   }
@@ -127,8 +180,20 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
     print(word)
   }
   
-  // MARK: - Table view data source
+  func gameMakerDidSet() {
+    switch self.playerType {
+    case .gameMaker:
+      self.setUpTableView()
+    case .player:
+      self.setUpTableView()
+      self.setUpDefinitionTextField()
+      self.setUpWordTextField()
+      self.setUpButton()
+      
+    }
+  }
   
+  // MARK: - Table view data source
   func numberOfSections(in tableView: UITableView) -> Int {
     return 1
   }
@@ -138,80 +203,36 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
   }
   
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
-    
-    cell.textLabel?.text = "\(self.messages[indexPath.row].definition)"
-    
+    let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! ContactCell
+    cell.delegate = self
+    cell.configure(message: self.messages[indexPath.row], playerType: self.playerType)
     return cell
   }
   
   // MARK: - Table view delegate
   
   func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-    // etc
+    //    tableView.deselectRow(at: indexPath, animated: true)
   }
   
-  
-  /*
-//
-//  var server = Server()
-//  var messages = [Message]()
-//  var userName = ""
-//  var gameIsOver = false
-//  var isGameMaker = false
-//  var gameIsStartedL = false
-//  var wordIsAlreadySet = false
-////  var tableView: UITableView!
-//  var delegate: GameViewControllerDelegate!
-  
-  override func viewDidLoad() {
-//    tableView.delegate = self
-//    tableView.dataSource = self
-//    delegate = self
-//    Server.commonFuncs = self
-    tableViewSettings()
-  }
-  
-  let tableView = UIButton()
-  
-  func tableViewSettings() {
-    tableView.setTitle("Button", for: .normal)
-    tableView.setTitleColor(UIColor.black, for: .normal)
-    tableView.backgroundColor = UIColor.white
-    
-    view.addSubview(tableView)
-    tableView.translatesAutoresizingMaskIntoConstraints = false
-    
-    let leftConstraint = NSLayoutConstraint(item: tableView, attribute: .leftMargin, relatedBy: .equal, toItem: view, attribute: .leftMargin, multiplier: 1.0, constant: 0)
-    let rightConstraint = NSLayoutConstraint(item: tableView, attribute: .rightMargin, relatedBy: .equal, toItem: view, attribute: .rightMargin, multiplier: 1.0, constant: 0)
-    let topConstraint = NSLayoutConstraint(item: tableView, attribute: .topMargin, relatedBy: .equal, toItem: view, attribute: .topMargin, multiplier: 1.0, constant: 0)
-//    let bottomConstraint = NSLayoutConstraint(item: tableView, attribute: .bottomMargin, relatedBy: .equal, toItem: view, attribute: .bottomMargin, multiplier: 1.0, constant: 0)
-    tableView.addConstraints([leftConstraint, rightConstraint, topConstraint])
-    
-  }
-  
-//  func newMessage(definition: String, word: String) {
-//    let message = Message(definition: definition, word: word, user: "smbd")
-//    self.messages.append(message)
-//  }
-//  
-//  func displayViewController(_ gameMaker: Bool) -> GameViewController? {
-//    let viewControllerIdentifer = gameMaker ? "GameMakerVC" : "PlayerVC"
-//    guard let gameVC = storyboard?.instantiateViewController(withIdentifier: viewControllerIdentifer) as? GameViewController else { return nil }
-//    gameVC.isGameMaker = self.isGameMaker
-//    gameVC.server = self.server
-//    gameVC.userName = self.userName
-//    return gameVC
-//  }
-//  
-  /// Switchs View Controller
-  
-//  func nextVC() {
-//    if let gameVC = displayViewController(self.isGameMaker) {
-//      present(gameVC, animated: true, completion: nil)
-//    }
-//  }
-//  
-  */
   
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

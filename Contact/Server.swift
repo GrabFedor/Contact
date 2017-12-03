@@ -11,33 +11,56 @@ import SwiftWebSocket
 
 protocol ServerDelegate {
   
+  var playerType: PlayerType { get set }
+  
   func newMessage(definition: String, word: String)
   
   func word(word:String)
   
+  func gameMakerDidSet()
+  
+  func contactJustHappened()
+  
+//  func setUpViewsDependingOnPlayerType()
+  
 }
 
-protocol ServerDelegatePlayer {
-  
-}
-protocol ServerDelegateGameMaker{
-  
-}
+//protocol ServerDelegatePlayer {
+//  
+//}
+//protocol ServerDelegateGameMaker{
+//  
+//}
 
 class Server {
   
   static private let ws = WebSocket("ws://127.0.0.1:5678")
   
-  static var commonFuncs: ServerDelegate!
-  var player: ServerDelegatePlayer!
-  var gameMAker: ServerDelegateGameMaker!
+  static var delegate: ServerDelegate!
   static private var connectionIsOpened = false
   static private var roomId = ""
   
-  class func sendMessage(message: Message){
+  class func sendMessage(message: Message) {
     let definition = message.definition
     let word = message.word
     ws.send("100\(definition)/\(word)")
+  }
+  
+  class func thinkOfAWord(word: String) {
+    ws.send("200\(word)")
+  }
+  
+  class func tryToContact(firstWord: String, secondWord: String) {
+    print("word is trying to be contacted is \(firstWord) and the estimated word is \(secondWord)")
+    ws.send("300\(firstWord)/\(secondWord)")
+  }
+  
+  class func cancelContact(actualWord: String, estimatedWord: String) {
+    ws.send("301\(actualWord)/\(estimatedWord)")
+  }
+  
+  class func checkWetherThereWasAContact() {
+    ws.send("302frame")
   }
   
   class func openConnection(firstMsg message: String) {
@@ -78,21 +101,30 @@ class Server {
       
       switch code {
         
+      case "0009":
+        var arr = decodedFrame.components(separatedBy: "/")
+        let roomId = arr[1]
+        let iAmGameMaker = arr[0]
+        self.roomId = roomId
+        print(self.roomId)
+        Server.delegate.playerType = iAmGameMaker == "1" ? .gameMaker : .player
+        Server.delegate.gameMakerDidSet()
+        
       case "1009":
         var arr = decodedFrame.components(separatedBy: "/")
         let definition = arr[0]
         let word = arr[1]
-        Server.commonFuncs.newMessage(definition: definition, word: word)
+        Server.delegate.newMessage(definition: definition, word: word)
         
       case "2009":
-        Server.commonFuncs.word(word: decodedFrame)
-        
-      case "0009":
-        var arr = decodedFrame.components(separatedBy: "/")
-        let roomId = arr[1]
-        print(arr[0])
-        self.roomId = roomId
-        print(self.roomId)
+        Server.delegate.word(word: decodedFrame)
+      
+      case "3029":
+        if decodedFrame == "1" {
+          Server.delegate.contactJustHappened()
+        } else {
+          print("Contact wasn't correct")
+        }
         
       default:
         break
@@ -103,39 +135,6 @@ class Server {
 }
 
 
-
-
-//  func requestForGameMakerName(userName: String) {
-//
-//  }
-//  func requestForAMessage(numberOfMessages: Int) {
-//    self.ws.send(numberOfMessages)
-//  }
-//
-//  func sendWSMessage(message: String, userName: String, numberOfMessages: Int, roomId: String, isANewMessage: Bool) {
-//
-//    let param = [
-//      "nm":isANewMessage,
-//      "room_id": roomId,
-//      "nom": numberOfMessages,
-//      "message": message
-//      ] as [String : Any]
-//
-//    print(param)
-//    if JSONSerialization.isValidJSONObject(param) {
-//      do {
-//        let rawData = try JSONSerialization.data(withJSONObject: param, options: .prettyPrinted)
-//        print(rawData)
-//        self.ws.send(rawData)
-//      } catch {
-//        print("smth is wrong")
-//      }
-//    }
-//  }
-
-//  func sendSimple(message: String) {
-//    self.ws.send(message)
-//  }
 
 
 
