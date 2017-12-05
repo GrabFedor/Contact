@@ -19,7 +19,7 @@ protocol ServerDelegate {
   
   func gameMakerDidSet()
   
-  func contactJustHappened()
+//  func contactJustHappened()
   
 //  func setUpViewsDependingOnPlayerType()
   
@@ -50,13 +50,13 @@ class Server {
     ws.send("200\(word)")
   }
   
-  class func tryToContact(firstWord: String, secondWord: String) {
-    print("word is trying to be contacted is \(firstWord) and the estimated word is \(secondWord)")
-    ws.send("300\(firstWord)/\(secondWord)")
+  class func tryToContact(estimatedWord: String, indexOfMessage: Int) {
+    print("word is trying to be contacted is \(estimatedWord) and the estimated word is \(indexOfMessage)")
+    ws.send("300\(estimatedWord)/\(indexOfMessage)")
   }
   
-  class func cancelContact(actualWord: String, estimatedWord: String) {
-    ws.send("301\(actualWord)/\(estimatedWord)")
+  class func cancelContact(estimatedWord: String, index: Int) {
+    ws.send("301\(estimatedWord)/\(index)")
   }
   
   class func checkWetherThereWasAContact() {
@@ -121,7 +121,8 @@ class Server {
       
       case "3029":
         if decodedFrame == "1" {
-          Server.delegate.contactJustHappened()
+//          Server.delegate.contactJustHappened()
+          print("Contact just happened")
         } else {
           print("Contact wasn't correct")
         }

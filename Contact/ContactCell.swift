@@ -8,12 +8,14 @@
 
 import UIKit
 
+//MARK: Contact Cell Delegate protocol
 protocol ContactCellDelegate: class {
   
-  func contactCellButtonSetup(firstWord: String)
+  func contactCellButtonSetup(index: Int)
   
 }
 
+//MARK: - Contact Cell Class
 class ContactCell: UITableViewCell {
   
   //MARK:- Properties
@@ -22,20 +24,25 @@ class ContactCell: UITableViewCell {
   
   weak var delegate: ContactCellDelegate?
   private var playerType: PlayerType?
-  private var word: String?
+//  private var word: String?
+  private var indexRow: Int?
   
-  func configure(message: Message, playerType: PlayerType) {
-    setUpDefinitionLabel()
+  //MARK:- Configuration
+  func configure(message: Message, playerType: PlayerType, index: Int) {
     self.playerType = playerType
-    self.word = message.word
+//    self.word = message.word
+    self.indexRow = index
+    setUpDefinitionLabel()
     setUpButton()
     definitionLabel.text = message.definition
   }
   
   func buttonAction(sender: UIButton) {
-    delegate?.contactCellButtonSetup(firstWord: self.word!)
+    guard let index = self.indexRow else { print("IndexRow hadn't been found"); return }
+//    guard let word = self.word else { print("Word in Contact Cell hadn't been found"); return }
+    delegate?.contactCellButtonSetup(index: index)
   }
-  //MARK:- Settings up
+  
   func setUpButton() {
     
     contactCellButton = UIButton()
@@ -70,12 +77,15 @@ class ContactCell: UITableViewCell {
     definitionLabel.numberOfLines = 0
     addSubview(definitionLabel)
     definitionLabel.backgroundColor = UIColor.gray
+    
+    //Cornstraints
     definitionLabel.leftAnchor.constraint(equalTo: leftAnchor, constant: 5).isActive = true
     definitionLabel.rightAnchor.constraint(equalTo: rightAnchor, constant: -45).isActive = true
     definitionLabel.topAnchor.constraint(equalTo: topAnchor, constant: 5).isActive = true
     definitionLabel.bottomAnchor.constraint(equalTo: topAnchor, constant: 25).isActive = true
   }
   
+  //MARK:- Overrides
   override func awakeFromNib() {
     super.awakeFromNib()
   }

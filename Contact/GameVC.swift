@@ -136,12 +136,12 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
   }
   
   //MARK: - Contact Cell Delegate
-  func contactCellButtonSetup(firstWord: String) {
+  func contactCellButtonSetup(index: Int) {
     switch playerType {
     case .gameMaker:
-      gameMakerContactCellButtonTarger(firstWord: firstWord)
+      gameMakerContactCellButtonTarger(index: index)
     case .player:
-      playerContactCellButtonTarget(firstWord: firstWord)
+      playerContactCellButtonTarget(index: index)
     }
   }
   
@@ -157,15 +157,15 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
     present(ac, animated: true, completion: nil)
   }
   
-  func gameMakerContactCellButtonTarger(firstWord: String) {
+  func gameMakerContactCellButtonTarger(index: Int) {
     buttonAlert(title: "Cancel Contact", placeholder: "type a word here") { word in
-      Server.cancelContact(actualWord: firstWord, estimatedWord: word)
+      Server.cancelContact(estimatedWord: word, index: index)
     }
   }
   
-  func playerContactCellButtonTarget(firstWord: String) {
+  func playerContactCellButtonTarget(index: Int) {
     buttonAlert(title: "Contact!", placeholder: "type a word here") { word in
-      Server.tryToContact(firstWord: firstWord, secondWord: word)
+      Server.tryToContact(estimatedWord: word, indexOfMessage: index)
     }
   }
   
@@ -205,7 +205,7 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! ContactCell
     cell.delegate = self
-    cell.configure(message: self.messages[indexPath.row], playerType: self.playerType)
+    cell.configure(message: self.messages[indexPath.row], playerType: self.playerType, index: indexPath.row)
     return cell
   }
   
