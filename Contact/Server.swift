@@ -12,17 +12,31 @@ import SwiftWebSocket
 //MARK:- Server Delegate protocol
 protocol ServerDelegate {
   
+  /// Propertie showing which type of a player is a current player
   var playerType: PlayerType { get set }
   
+  /// This function is called when message has just been sent from a server
+  /// - parameters:
+  ///   - definition: definition of a word
+  ///   - word: a word is being explained by player
   func newMessage(definition: String, word: String)
   
+  /// This function is called when word is sent from a server
+  /// - parameters:
+  ///   - word: is a word from the server
   func word(word:String)
   
+  /// This function is called after all the players connected to the server and game maker is set
   func gameMakerDidSet()
   
   func contactJustHappened()
   
   func contactJustNotHappened()
+  
+  ///This function is called when someone has just canceled contact
+  /// - parameters:
+  ///   - indexOfCanceledMessage: index of a message which
+  func contactHasJustHadCanceled(indexOfCanceledMessage: Int)
   
 }
 
@@ -121,7 +135,13 @@ class Server {
         
       case "2009":
         Server.delegate.word(word: decodedFrame)
-      
+        
+      case "3019":
+        var arr = decodedFrame.components(separatedBy: "/")
+        let isCanceled = arr[0] == "1" ? true : false
+        if isCanceled {
+          delegate.contactHasJustHadCanceled(indexOfCanceledMessage: Int(arr[1])!)
+        }
       case "3029":
         if decodedFrame == "1" {
           Server.delegate.contactJustHappened()

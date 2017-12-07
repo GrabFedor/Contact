@@ -44,7 +44,6 @@ class ContactCell: UITableViewCell {
   }
   
   func setUpButton() {
-    
     contactCellButton = UIButton()
     contactCellButton.translatesAutoresizingMaskIntoConstraints = false
     addSubview(contactCellButton)
@@ -52,7 +51,6 @@ class ContactCell: UITableViewCell {
     contactCellButton.titleLabel?.adjustsFontSizeToFitWidth = true
     contactCellButton.titleLabel?.minimumScaleFactor = 0.5
     contactCellButton.addTarget(self, action: #selector(buttonAction(sender:)), for: .touchUpInside)
-    
     switch playerType {
     case .none:
       print("player type in contact cell is not defined")
@@ -63,7 +61,6 @@ class ContactCell: UITableViewCell {
       contactCellButton.backgroundColor = UIColor.red
       contactCellButton.setTitle("Cancel", for: .normal)
     }
-    
     //Cornstraints
     contactCellButton.rightAnchor.constraint(equalTo: rightAnchor, constant: 5).isActive = true
     contactCellButton.leftAnchor.constraint(equalTo: definitionLabel.rightAnchor, constant: 5).isActive = true
@@ -83,6 +80,10 @@ class ContactCell: UITableViewCell {
     definitionLabel.rightAnchor.constraint(equalTo: rightAnchor, constant: -45).isActive = true
     definitionLabel.topAnchor.constraint(equalTo: topAnchor, constant: 5).isActive = true
     definitionLabel.bottomAnchor.constraint(equalTo: topAnchor, constant: 25).isActive = true
+  }
+  
+  func removeButton() {
+    contactCellButton.bottomAnchor.constraint(equalTo: topAnchor, constant: 5).isActive = true
   }
   
   //MARK:- Overrides
