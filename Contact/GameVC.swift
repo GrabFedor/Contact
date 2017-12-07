@@ -203,7 +203,11 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
   }
   
   func contactJustHappened() {
-    buttonAlert(title: "Contact was right!", placeholder: nil, handler: nil)
+//    buttonAlert(title: "Contact was right!", placeholder: nil, handler: nil)
+    let ac = UIAlertController(title: "Nice one!", message: nil, preferredStyle: .alert)
+    let aa = UIAlertAction(title: "Ok", style: .default, handler: nil)
+    ac.addAction(aa)
+    self.present(ac, animated: true, completion: nil)
   }
   
   func contactJustNotHappened() {
