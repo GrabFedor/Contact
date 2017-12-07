@@ -15,19 +15,23 @@ protocol GameViewControllerDelegate {
   
 }
 
+//MARK:- Player Type
 enum PlayerType {
   case player
   
   case gameMaker
 }
 
+//MARK:- Game View Controller Class
 class GameViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, ServerDelegate, ContactCellDelegate {
   
+  //MARK:- Properties
   private var messages = [Message]()
   private var name = ""
   
   var playerType: PlayerType = .player
   
+  //MARK:- UI Objects Initialisations
   let tableView : UITableView = {
     let t = UITableView()
     t.translatesAutoresizingMaskIntoConstraints = false
@@ -55,38 +59,6 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
     return btn
   }()
   
-  func sendButtonAction(sender: UIButton!) {
-    let btnsendtag: UIButton = sender
-    if btnsendtag.tag == 1 {
-      let message = Message(definition: definitionTextField.text!, word: wordTextField.text!, user: self.name)
-      Server.sendMessage(message: message)
-    }
-  }
-  
-  override func viewDidLoad() {
-    super.viewDidLoad()
-    Server.delegate = self
-  }
-  
-  override func viewDidAppear(_ animated: Bool) {
-    super.viewDidAppear(animated)
-    startGame()
-  }
-  
-  func startGame() {
-    let alertController = UIAlertController(title: "Name", message: nil, preferredStyle: .alert)
-    alertController.addTextField { textField in
-      textField.placeholder = "Type your nickname here..."
-    }
-    let alertAction = UIAlertAction(title: "Ok", style: .default) { aa in
-      self.name = (alertController.textFields?[0].text)!
-      Server.openConnection(firstMsg: self.name)
-    }
-    alertController.addAction(alertAction)
-    present(alertController, animated: true, completion: nil)
-  }
-  
-
   //MARK:- Setting up Views
   func setUpButton() {
     self.view.addSubview(sendButton)
@@ -97,7 +69,7 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
     self.view.addSubview(definitionTextField)
     definitionTextField.backgroundColor = UIColor.lightGray
     definitionTextField.placeholder = "Type a definition here"
-    
+    //Cornstarits
     definitionTextField.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 10.0).isActive = true
     definitionTextField.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 10.0).isActive = true
     definitionTextField.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -10.0).isActive = true
@@ -108,12 +80,11 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
     self.view.addSubview(wordTextField)
     wordTextField.backgroundColor = UIColor.lightGray
     wordTextField.placeholder = "type a word here"
-    
+    //Cornstraits
     wordTextField.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 10.0).isActive = true
     wordTextField.topAnchor.constraint(equalTo: definitionTextField.bottomAnchor, constant: 10.0).isActive = true
     wordTextField.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -10.0).isActive = true
     definitionTextField.heightAnchor.constraint(equalToConstant: 20).isActive = true
-    
   }
   
   func setUpTableView() {
@@ -135,29 +106,67 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
     tableView.register(ContactCell.self, forCellReuseIdentifier: "cell")
   }
   
+  //MARK:- View Cotnroller Life cycle
+  override func viewDidLoad() {
+    super.viewDidLoad()
+    Server.delegate = self
+  }
+  
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    startGame()
+  }
+  
+  func sendButtonAction(sender: UIButton!) {
+    let btnsendtag: UIButton = sender
+    if btnsendtag.tag == 1 {
+      let message = Message(definition: definitionTextField.text!, word: wordTextField.text!, user: self.name)
+      Server.sendMessage(message: message)
+    }
+   }
+  
+  func startGame() {
+    let alertController = UIAlertController(title: "Name", message: nil, preferredStyle: .alert)
+    alertController.addTextField { textField in
+      textField.placeholder = "Type your nickname here..."
+    }
+    let alertAction = UIAlertAction(title: "Ok", style: .default) { aa in
+      self.name = (alertController.textFields?[0].text)!
+      Server.openConnection(firstMsg: self.name)
+    }
+    alertController.addAction(alertAction)
+    present(alertController, animated: true, completion: nil)
+  }
+  
   //MARK: - Contact Cell Delegate
   func contactCellButtonSetup(index: Int) {
     switch playerType {
     case .gameMaker:
-      gameMakerContactCellButtonTarger(index: index)
+      gameMakerContactCellButtonTarget(index: index)
     case .player:
       playerContactCellButtonTarget(index: index)
     }
   }
   
-  func buttonAlert(title: String, placeholder: String, handler: @escaping(_:String) -> Void) {
+  func buttonAlert(title: String, placeholder: String?, handler: ((_:String) -> Void)?) {
     let ac = UIAlertController(title: "", message: nil, preferredStyle: .alert)
-    ac.addTextField { tt in
-      tt.placeholder = placeholder
+    if let placeholder = placeholder {
+      ac.addTextField { tt in
+        tt.placeholder = placeholder
+      }
     }
     let aa = UIAlertAction(title: "Ok", style: .default) { aa in
-      handler((ac.textFields?[0].text!)!)
+      if let textFieldText = ac.textFields?[0].text {
+        if let compl = handler {
+          compl(textFieldText)
+        }
+      }
     }
     ac.addAction(aa)
     present(ac, animated: true, completion: nil)
   }
   
-  func gameMakerContactCellButtonTarger(index: Int) {
+  func gameMakerContactCellButtonTarget(index: Int) {
     buttonAlert(title: "Cancel Contact", placeholder: "type a word here") { word in
       Server.cancelContact(estimatedWord: word, index: index)
     }
@@ -193,6 +202,14 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
   }
   
+  func contactJustHappened() {
+    buttonAlert(title: "Contact was right!", placeholder: nil, handler: nil)
+  }
+  
+  func contactJustNotHappened() {
+    buttonAlert(title: "Contact is not correct", placeholder: nil, handler: nil)
+  }
+  
   // MARK: - Table view data source
   func numberOfSections(in tableView: UITableView) -> Int {
     return 1
@@ -215,7 +232,13 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
     //    tableView.deselectRow(at: indexPath, animated: true)
   }
   
-  
+}
+
+func delay (withTime time: Double, callback: @escaping () -> Void) {
+  let when = DispatchTime.now() + time
+  DispatchQueue.main.asyncAfter(deadline: when) {
+    callback()
+  }
 }
 
 

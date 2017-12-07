@@ -9,6 +9,7 @@
 import Foundation
 import SwiftWebSocket
 
+//MARK:- Server Delegate protocol
 protocol ServerDelegate {
   
   var playerType: PlayerType { get set }
@@ -19,19 +20,14 @@ protocol ServerDelegate {
   
   func gameMakerDidSet()
   
-//  func contactJustHappened()
+  func contactJustHappened()
   
-//  func setUpViewsDependingOnPlayerType()
+  func contactJustNotHappened()
   
 }
 
-//protocol ServerDelegatePlayer {
-//  
-//}
-//protocol ServerDelegateGameMaker{
-//  
-//}
 
+//MARK:- Server Class
 class Server {
   
   static private let ws = WebSocket("ws://127.0.0.1:5678")
@@ -40,6 +36,7 @@ class Server {
   static private var connectionIsOpened = false
   static private var roomId = ""
   
+  //MARK:- Sending data to a server
   class func sendMessage(message: Message) {
     let definition = message.definition
     let word = message.word
@@ -53,6 +50,9 @@ class Server {
   class func tryToContact(estimatedWord: String, indexOfMessage: Int) {
     print("word is trying to be contacted is \(estimatedWord) and the estimated word is \(indexOfMessage)")
     ws.send("300\(estimatedWord)/\(indexOfMessage)")
+    delay(withTime: 5.0) {
+      checkWetherThereWasAContact()
+    }
   }
   
   class func cancelContact(estimatedWord: String, index: Int) {
@@ -60,9 +60,10 @@ class Server {
   }
   
   class func checkWetherThereWasAContact() {
-    ws.send("302frame")
+    self.ws.send("302frame")
   }
   
+  //MARK:- Recieving data to a server
   class func openConnection(firstMsg message: String) {
     ws.event.open = {
       if !connectionIsOpened {
@@ -103,9 +104,8 @@ class Server {
         
       case "0009":
         var arr = decodedFrame.components(separatedBy: "/")
-        let roomId = arr[1]
         let iAmGameMaker = arr[0]
-        self.roomId = roomId
+        self.roomId = arr[1]
         print(self.roomId)
         Server.delegate.playerType = iAmGameMaker == "1" ? .gameMaker : .player
         Server.delegate.gameMakerDidSet()
@@ -121,17 +121,16 @@ class Server {
       
       case "3029":
         if decodedFrame == "1" {
-//          Server.delegate.contactJustHappened()
+          Server.delegate.contactJustHappened()
           print("Contact just happened")
         } else {
+          Server.delegate.contactJustNotHappened()
           print("Contact wasn't correct")
         }
-        
       default:
         break
       }
     }
-    
   }
 }
 
