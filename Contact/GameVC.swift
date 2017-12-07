@@ -59,6 +59,12 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
     return btn
   }()
   
+  let wordLabel: UILabel = {
+    let lbl = UILabel()
+    lbl.translatesAutoresizingMaskIntoConstraints = false
+    return lbl
+  }()
+  
   //MARK:- Setting up Views
   func setUpButton() {
     self.view.addSubview(sendButton)
@@ -104,6 +110,15 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     // register a defalut cell
     tableView.register(ContactCell.self, forCellReuseIdentifier: "cell")
+  }
+  
+  func setUpWordLabel() {
+    view.addSubview(wordLabel)
+    //Cornstraits
+    wordLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -10)
+    wordLabel.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 10)
+    wordLabel.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -10)
+    wordLabel.heightAnchor.constraint(equalToConstant: 25)
   }
   
   //MARK:- View Cotnroller Life cycle
@@ -186,7 +201,8 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
   }
   
   func word(word: String) {
-    print(word)
+    wordLabel.text = word
+//    print(word)
   }
   
   func gameMakerDidSet() {
@@ -207,6 +223,7 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
     let ac = UIAlertController(title: "Nice one!", message: nil, preferredStyle: .alert)
     let aa = UIAlertAction(title: "Ok", style: .default, handler: nil)
     ac.addAction(aa)
+    Server.showCurrentWord()
     self.present(ac, animated: true, completion: nil)
   }
   

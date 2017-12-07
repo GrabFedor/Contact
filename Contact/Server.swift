@@ -47,6 +47,9 @@ class Server {
     ws.send("200\(word)")
   }
   
+  class func showCurrentWord() {
+    ws.send("201frame")
+  }
   class func tryToContact(estimatedWord: String, indexOfMessage: Int) {
     print("word is trying to be contacted is \(estimatedWord) and the estimated word is \(indexOfMessage)")
     ws.send("300\(estimatedWord)/\(indexOfMessage)")
