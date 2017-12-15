@@ -33,9 +33,6 @@ class ContactCell: UITableViewCell {
     self.playerType = playerType
     self.indexRow = index
     setUpDefinitionLabel()
-    print(message.isAbleToBeInteracted)
-//    setUpButton()
-//    contactCellButton.isHidden = !message.isAbleToBeInteracted
     contactCellButton = contentView.viewWithTag(111) as! UIButton!
     if message.isAbleToBeInteracted {
       setUpButton()

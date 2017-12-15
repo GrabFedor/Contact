@@ -41,6 +41,9 @@ protocol ServerDelegate: NSObjectProtocol {
   ///   - indexOfCanceledMessage: index of a message which
   func contactHasHadCanceled(indexOfCanceledMessage: Int)
   
+  /// This function is called when player has to be refreshed
+  func refresh()
+  
 }
 
 
@@ -62,10 +65,6 @@ class Server {
   
   class func thinkOfAWord(word: String) {
     ws.send("200\(word)")
-  }
-  
-  class func showCurrentWord() {
-    ws.send("201frame")
   }
   
   class func tryToContact(estimatedWord: String, indexOfMessage: Int) {
@@ -153,6 +152,9 @@ class Server {
           Server.delegate?.contactJustHappened(indexOfMessage: indexOfMessageIsTryingToBeContacted!)
           print("Contact just happened")
         }
+        
+      case "9999":
+        Server.delegate?.refresh()
         
       default:
         break

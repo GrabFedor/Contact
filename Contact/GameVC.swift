@@ -127,8 +127,9 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
   
   func contactJustHappened(indexOfMessage: Int) {
     messages[indexOfMessage].isAbleToBeInteracted = false
-    tableView.reloadData()
-    Server.showCurrentWord()
+    let indexPath = IndexPath(row: indexOfMessage, section: 0)
+    tableView.reloadRows(at: [indexPath], with: .automatic)
+//    Server.showCurrentWord()
   }
   
   func contactJustNotHappened() {
@@ -142,6 +143,12 @@ class GameViewController: UIViewController, UITableViewDelegate, UITableViewData
     tableView.reloadRows(at: [indexPath], with: .automatic)
   }
   
+  func refresh() {
+    for view in view.subviews {
+      view.removeFromSuperview()
+    }
+    messages.removeAll()
+  }
   // MARK: - Table view Delegate
   
   func numberOfSections(in tableView: UITableView) -> Int {
